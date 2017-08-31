@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+import sys
+import json
+import logging
+import requests
+import subprocess
+
+sha=sys.argv[1]
+status_url=sys.argv[2]
+repository_url=sys.argv[3]
+github_token = sys.argv[4]
+
+subprocess.call(["mkdir", "-p", sha])
+
+logging.basicConfig(filename=sha+'/log', level=logging.DEBUG)
+
+logging.info("SHA="+sha)
+logging.info("status_url="+status_url)
+logging.info("repository_url="+repository_url)
+
+status = {
+    "state": "pending",
+    "target_url": "https://videk.ijs.si",
+    "description": "The build is pending!",
+    "context": "logatec-expeiment-ci"}
+
+headers = {'Content-type': 'application/json'}
+
+r = requests.post(status_url+"?access_token="+github_token, data=json.dumps(status), headers=headers)
+
+logging.info('%s %s', r.status_code, r.reason)
+
+try:
+    out_nodes = subprocess.check_output(["ansible-playbook", "nodes.yml"])
+    out_controler = subprocess.check_output(["ansible-playbook", "controller.yml"])
+    
+    status['state'] = "success"
+    status['target_url'] = "https://videk.ijs.si"
+    status['description'] = "The build succeeded!"
+    
+    r = requests.post(status_url+"?access_token="+github_token, data=json.dumps(status), headers=headers)
+    
+    logging.info(out_nodes)
+    logging.info(out_controler)
+    logging.info('%s %s', r.status_code, r.reason)
+except subprocess.CalledProcessError as e:
+    status['state'] = "failure"
+    status['target_url'] = "https://videk.ijs.si"
+    status['description'] = "The build failed!"
+    
+    r = requests.post(status_url+"?access_token="+github_token, data=json.dumps(status), headers=headers)
+    
+    logging.error(e.output)
+    logging.info('%s %s', r.status_code, r.reason)
