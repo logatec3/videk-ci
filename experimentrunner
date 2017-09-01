@@ -1,55 +1,48 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import json
 import logging
 import requests
 import subprocess
 
-sha=sys.argv[1]
-status_url=sys.argv[2]
-repository_url=sys.argv[3]
-github_token = sys.argv[4]
+tag_name = sys.argv[1]
+upload_url = sys.argv[2]
+repository_name = sys.argv[3]
+repository_url = sys.argv[4]
+github_token = sys.argv[5]
 
-subprocess.call(["mkdir", "-p", sha])
+subprocess.call(["mkdir", "-p", tag_name])
 
-logging.basicConfig(filename=sha+'/log', level=logging.DEBUG)
+logging.basicConfig(filename=tag_name+'/log', level=logging.DEBUG)
 
-logging.info("SHA="+sha)
-logging.info("status_url="+status_url)
-logging.info("repository_url="+repository_url)
-
-status = {
-    "state": "pending",
-    "target_url": "https://videk.ijs.si",
-    "description": "The build is pending!",
-    "context": "logatec-expeiment-ci"}
-
-headers = {'Content-type': 'application/json'}
-
-r = requests.post(status_url+"?access_token="+github_token, data=json.dumps(status), headers=headers)
-
-logging.info('%s %s', r.status_code, r.reason)
+header = "Content-Type:application/zip"
 
 try:
-    out_nodes = subprocess.check_output(["ansible-playbook", "nodes.yml"])
-    out_controler = subprocess.check_output(["ansible-playbook", "controller.yml"])
+    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url], cwd=tag_name)
     
-    status['state'] = "success"
-    status['target_url'] = "https://videk.ijs.si"
-    status['description'] = "The build succeeded!"
+    out_nodes = subprocess.check_output(["ansible-playbook", "nodes.yml"], cwd=tag_name+"/"+repository_name)
     
-    r = requests.post(status_url+"?access_token="+github_token, data=json.dumps(status), headers=headers)
+    out_controller = subprocess.check_output(["ansible-playbook", "controller.yml"], cwd=tag_name+"/"+repository_name)
+    
+    out_cleanup = subprocess.check_output(["ansible-playbook", "nodes-cleanup.yml"], cwd=tag_name+"/"+repository_name)
     
     logging.info(out_nodes)
-    logging.info(out_controler)
-    logging.info('%s %s', r.status_code, r.reason)
+    logging.info(out_controller)
+    logging.info(out_cleanup)
+
+    out_zip = subprocess.check_output(["zip", "experiment-results.zip", "log"], cwd=tag_name)
+
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@experiment-results.zip", upload_url+"?access_token="+github_token+"&name=experiment-results.zip"], cwd=tag_name)
+    
+    logging.info(out_upload)
+    
 except subprocess.CalledProcessError as e:
-    status['state'] = "failure"
-    status['target_url'] = "https://videk.ijs.si"
-    status['description'] = "The build failed!"
-    
-    r = requests.post(status_url+"?access_token="+github_token, data=json.dumps(status), headers=headers)
-    
     logging.error(e.output)
-    logging.info('%s %s', r.status_code, r.reason)
+
+    out_zip = subprocess.check_output(["zip", "experiment-results.zip", "log"], cwd=tag_name)
+
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@experiment-results.zip", upload_url+"?access_token="+github_token+"&name=experiment-results.zip"], cwd=tag_name)
+    
+    logging.info(out_upload)
