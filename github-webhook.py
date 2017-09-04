@@ -14,7 +14,7 @@ def webhook():
 	upload_url = data['release']['upload_url'].replace("{?name,label}", "")
 	repository_name = data['repository']['name']
 	repository_url = data['repository']['clone_url']
-	subprocess.Popen(["./experimentrunner", tag_name, upload_url, repository_name, repository_url, github_token])
+	subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
 	return "OK"
 
 if __name__ == '__main__':

@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import json
+import logging
+import requests
+import subprocess
+
+tag_name = sys.argv[1]
+upload_url = sys.argv[2]
+repository_name = sys.argv[3]
+repository_url = sys.argv[4]
+github_token = sys.argv[5]
+
+subprocess.call(["mkdir", "-p", tag_name])
+
+logging.basicConfig(filename=tag_name+'/log', level=logging.DEBUG)
+
+header = "Content-Type:application/zip"
+
+try:
+    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url], cwd=tag_name)
+    
+    out_build = subprocess.check_output(["make"], cwd=tag_name+"/"+repository_name)
+    
+    logging.info(out_build)
+
+    out_zip = subprocess.check_output(["zip", "build-results.zip", "log"], cwd=tag_name)
+
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name)
+    
+    logging.info(out_upload)
+    
+except subprocess.CalledProcessError as e:
+    logging.error(e.output)
+
+    out_zip = subprocess.check_output(["zip", "build-results.zip", "log"], cwd=tag_name)
+
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name)
+    
+    logging.info(out_upload)
+
+subprocess.call(["rm", "-rf", tag_name])
