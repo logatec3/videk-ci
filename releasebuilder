@@ -14,7 +14,7 @@ github_token = sys.argv[5]
 
 subprocess.call(["mkdir", "-p", tag_name+"/out"])
 
-logging.basicConfig(filename=tag_name+'/out/debug.log', level=logging.DEBUG)
+logging.basicConfig(filename=tag_name+'/out/build.log', level=logging.DEBUG)
 logging.info("build pending ...")
 
 header = "Content-Type:application/zip"
