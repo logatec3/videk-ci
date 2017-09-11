@@ -10,12 +10,12 @@ from flask import Flask, request, jsonify
 github_token = sys.argv[1]
 secret = os.environ['SECRET_TOKEN']
 
-app = Flask(__name__)
-
 def verify_hmac_hash(data, signature):
     github_secret = bytes(secret, 'UTF-8')
     mac = hmac.new(github_secret, msg=data, digestmod=hashlib.sha1)
     return hmac.compare_digest('sha1=' + mac.hexdigest(), signature)
+
+app = Flask(__name__)
 
 @app.route('/pyload', methods=['POST'])
 def webhook():
