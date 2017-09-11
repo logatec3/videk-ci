@@ -45,5 +45,4 @@ def webhook():
         return jsonify({'msg': 'invalid hash'})
 
 if __name__ == '__main__':
-    app.debug = True
     app.run(host="localhost", port=8000)
