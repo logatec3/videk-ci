@@ -29,7 +29,7 @@ def webhook():
         event = request.headers.get('X-GitHub-Event')
         if event == 'ping':
             return jsonify({'msg': 'ok'})
-        else if event == 'release':
+        elif event == 'release':
             tag_name = data['release']['tag_name']
             upload_url = data['release']['upload_url'].replace("{?name,label}", "")
             repository_name = data['repository']['name']
