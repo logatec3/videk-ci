@@ -21,7 +21,7 @@ app = Flask(__name__)
 def webhook():
     signature = request.headers.get('X-Hub-Signature')
     if signature == None:
-        return jsonify({'msg': 'missing hash'}), 403
+        return jsonify({'msg': 'missing hash'}), 401
 
     req = request.data
     if verify_hmac_hash(req, signature):
@@ -37,9 +37,9 @@ def webhook():
             subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
             return jsonify({'msg': 'ok'})
         else:
-            return jsonify({'msg': 'not implemented event'}), 501
+            return jsonify({'msg': 'event not supported'}), 404
     else:
-        return jsonify({'msg': 'invalid hash'}), 403
+        return jsonify({'msg': 'invalid hash'}), 401
 
 if __name__ == '__main__':
     app.run(host="localhost", port=8000)
