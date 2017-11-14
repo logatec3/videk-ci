@@ -11,6 +11,8 @@ repository_name = sys.argv[3]
 repository_url = sys.argv[4]
 github_token = sys.argv[5]
 
+repository_url_token = repository_url.replace('github', github_token+"@"+"github", 1)
+
 subprocess.call(["mkdir", "-p", tag_name+"/out"])
 
 logging.basicConfig(filename=tag_name+'/out/build.log', level=logging.DEBUG)
@@ -19,9 +21,9 @@ logging.info("build pending ...")
 header = "Content-Type:application/zip"
 
 try:
-    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url], cwd=tag_name)
+    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
     
-    out_build = subprocess.check_output(["make"], cwd=tag_name+"/"+repository_name)
+    out_build = subprocess.check_output(["make", "ci"], cwd=tag_name+"/"+repository_name)
     
     logging.info(out_build)
 
