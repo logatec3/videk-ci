@@ -23,7 +23,7 @@ header = "Content-Type:application/zip"
 try:
     out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
     
-    out_build = subprocess.check_output(["make", "ci"], cwd=tag_name+"/"+repository_name)
+    out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
     
     logging.info(out_build)
 
