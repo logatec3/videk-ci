@@ -29,12 +29,13 @@ def webhook():
         event = request.headers.get('X-GitHub-Event')
         if event == 'ping':
             return jsonify({'msg': 'ok'})
-        elif event == 'release' and data['action'] == "published":
-            tag_name = data['release']['tag_name']
-            upload_url = data['release']['upload_url'].replace("{?name,label}", "")
-            repository_name = data['repository']['name']
-            repository_url = data['repository']['clone_url']
-            subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
+        elif event == 'release':
+            if data['action'] == "published":
+                tag_name = data['release']['tag_name']
+                upload_url = data['release']['upload_url'].replace("{?name,label}", "")
+                repository_name = data['repository']['name']
+                repository_url = data['repository']['clone_url']
+                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
             return jsonify({'msg': 'ok'})
         else:
             return jsonify({'msg': 'event not supported'}), 404
