@@ -20,15 +20,11 @@ logging.info("build pending ...")
 
 header = "Content-Type:application/zip"
 
-try:
-    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
+out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
     
-    out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
+out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
     
-    logging.info(out_build)
-
-except subprocess.CalledProcessError as e:
-    logging.error(e.output)
+logging.info(out_build)
 
 out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name)
 
