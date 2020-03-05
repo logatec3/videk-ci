@@ -12,7 +12,7 @@ github_token = sys.argv[5]
 
 def logging(log):
     with open(tag_name+'/out/build.log', 'a') as f:
-        f.write(log + '\n')
+        f.write(str(log) + '\n')
 
 repository_url_token = repository_url.replace('github', github_token+"@"+"github", 1)
 
