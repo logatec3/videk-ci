@@ -2,7 +2,6 @@
 
 import os
 import sys
-import logging
 import subprocess
 
 tag_name = sys.argv[1]
@@ -11,12 +10,15 @@ repository_name = sys.argv[3]
 repository_url = sys.argv[4]
 github_token = sys.argv[5]
 
+def logging(log):
+    with open(tag_name+'/out/build.log', 'a') as f:
+        f.write(log + '\n')
+
 repository_url_token = repository_url.replace('github', github_token+"@"+"github", 1)
 
 subprocess.call(["mkdir", "-p", tag_name+"/out"])
 
-logging.basicConfig(filename=tag_name+'/out/build.log', level=logging.DEBUG)
-logging.info("build pending ...")
+logging("build pending ...")
 
 header = "Content-Type:application/zip"
 
@@ -24,7 +26,7 @@ out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", 
     
 out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
     
-logging.info(out_build)
+logging(out_build)
 
 out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name)
 
