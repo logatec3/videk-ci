@@ -10,8 +10,6 @@ repository_name = sys.argv[3]
 repository_url = sys.argv[4]
 github_token = sys.argv[5]
 
-header = "Content-Type:application/zip"
-
 def logging(log):
     try:
         log = log.decode("utf-8")
@@ -31,18 +29,31 @@ repository_url_token = repository_url.replace('github', github_token+"@"+"github
 logging("build pending ...")
 
 try:
-    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
+    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_clone)
+except Exception as e:
+    logging(e)
+    pass
 
-    out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
+try:
+    out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name, stderr=subprocess.STDOUT)
     logging(out_build)
+except Exception as e:
+    logging(e)
+    pass
 
-    out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name)
+try:
+    out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_zip)
+except Exception as e:
+    logging(e)
+    pass
 
-    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name)
+header = "Content-Type:application/zip"
+
+try:
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_upload)
-
 except Exception as e:
     logging(e)
     pass
