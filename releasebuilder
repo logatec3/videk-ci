@@ -26,13 +26,19 @@ logging("build pending ...")
 header = "Content-Type:application/zip"
 
 out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
-    
+
+logging(out_clone)
+
 out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
     
 logging(out_build)
 
 out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name)
 
+logging(out_zip)
+
 out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name)
+
+logging(out_upload)
 
 subprocess.call(["rm", "-rf", tag_name])
