@@ -11,8 +11,13 @@ repository_url = sys.argv[4]
 github_token = sys.argv[5]
 
 def logging(log):
+    try:
+        log = log.decode("utf-8")
+    except (UnicodeDecodeError, AttributeError):
+        pass
+
     with open(tag_name+'/out/build.log', 'a') as f:
-        f.write(log.decode("utf-8") + '\n')
+        f.write(log + '\n')
 
 if not os.path.isdir(tag_name+"/out"):
     subprocess.call(["mkdir", "-p", tag_name+"/out"])
@@ -21,24 +26,44 @@ else:
 
 repository_url_token = repository_url.replace('github', github_token+"@"+"github", 1)
 
-logging(b'build pending ...')
+logging("build pending ...")
 
 header = "Content-Type:application/zip"
 
-out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
+try:
+    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name)
+except subprocess.CalledProcessError as e:
+    logging(e.output)
+    pass
 
 logging(out_clone)
 
-out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
+try:
+    out_build = subprocess.check_output(["make", "cd"], cwd=tag_name+"/"+repository_name)
+except subprocess.CalledProcessError as e:
+    logging(e.output)
+    pass
     
 logging(out_build)
 
-out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name)
+try:
+    out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name)
+except subprocess.CalledProcessError as e:
+    logging(e.output)
+    pass
 
 logging(out_zip)
 
-out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name)
+try:
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name)
+except subprocess.CalledProcessError as e:
+    logging(e.output)
+    pass
 
 logging(out_upload)
 
-subprocess.call(["rm", "-rf", tag_name])
+try:
+    subprocess.call(["rm", "-rf", tag_name])
+except subprocess.CalledProcessError as e:
+    logging(e.output)
+    pass
