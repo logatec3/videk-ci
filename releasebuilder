@@ -11,7 +11,7 @@ repository_name = sys.argv[3]
 repository_url = sys.argv[4]
 github_token = sys.argv[5]
 
-header = "Content-Type:application/zip"
+header = "Content-Type:application/zip\r\nAuthorization: token {}".format(github_token)
 
 def logging(log):
     try:
@@ -52,7 +52,7 @@ except:
     pass
 
 try:
-    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?access_token="+github_token+"&name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_upload)
 except:
     logging(traceback.format_exc())
