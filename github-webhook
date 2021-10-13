@@ -8,6 +8,10 @@ import subprocess
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from datetime import datetime
+import logging
+
+logging.basicConfig(format="%(asctime)s [%(levelname)7s] - %(message)s", level=logging.DEBUG, filename="/root/videk-ci/webhook.log")
+log = logging.getLogger("Webhook")
 
 github_token = sys.argv[1]
 secret = os.environ['SECRET_TOKEN']
@@ -27,8 +31,10 @@ def checkReservedResources(username, technology):
         "$and" :[{"username":username},{"event.tags.radio_type":technology},{"event.tags.status":"confirmed"}]
     })
     for r in reservations:
+        log.debug(r)
         if ( (r["event"]["start"] < now) and (r["event"]["end"] > now) ):
             return True
+    log.warning("User " + username + " has not made a reservation for technology " + technology)
     return False
 
 def verify_hmac_hash(data, signature):
@@ -54,14 +60,16 @@ def webhook():
             if data['action'] == "published":
                 user = data['author']['login']
                 branch_name = data['target_commitish']
+                tag_name = data['release']['tag_name']
 
                 if(getUserType(user) == "admin"):
+                    log.info("Admin user " + user + " made a release for technology " + branch_name + "(" + tag_name + ")")
                     granted_access = True
                 else:
                     granted_access = checkReservedResources(user, branch_name)
 
                 if granted_access:
-                    tag_name = data['release']['tag_name']
+                    log.info("User " + user + " successfully made a release for technology " + branch_name + "(" + tag_name + ")")
                     upload_url = data['release']['upload_url'].replace("{?name,label}", "")
                     repository_name = data['repository']['name']
                     repository_url = data['repository']['clone_url']
