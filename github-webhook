@@ -6,9 +6,30 @@ import hmac
 import hashlib
 import subprocess
 from flask import Flask, request, jsonify
+from pymongo import MongoClient
+from datetime import datetime
 
 github_token = sys.argv[1]
 secret = os.environ['SECRET_TOKEN']
+
+db = MongoClient("mongodb://localhost:27017/sms")["sms"]
+
+def getUserType(username):
+    user = db["users"].find_one({"username":username})
+    if(user):
+        return user["type"]
+    else:
+        return "unknown"
+
+def checkReservedResources(username, technology):
+    now = datetime.now().isoformat()
+    reservations = db["reserved_resources"].find({
+        "$and" :[{"username":username},{"event.tags.radio_type":technology},{"event.tags.status":"confirmed"}]
+    })
+    for r in reservations:
+        if ( (r["event"]["start"] < now) and (r["event"]["end"] > now) ):
+            return True
+    return False
 
 def verify_hmac_hash(data, signature):
     github_secret = bytes(secret, 'UTF-8')
@@ -31,12 +52,25 @@ def webhook():
             return jsonify({'msg': 'ok'})
         elif event == 'release':
             if data['action'] == "published":
-                tag_name = data['release']['tag_name']
-                upload_url = data['release']['upload_url'].replace("{?name,label}", "")
-                repository_name = data['repository']['name']
-                repository_url = data['repository']['clone_url']
-                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
-            return jsonify({'msg': 'ok'})
+                user = data['author']['login']
+                branch_name = data['target_commitish']
+
+                if(getUserType(user) == "admin"):
+                    granted_access = True
+                else:
+                    granted_access = checkReservedResources(user, branch_name)
+
+                if granted_access:
+                    tag_name = data['release']['tag_name']
+                    upload_url = data['release']['upload_url'].replace("{?name,label}", "")
+                    repository_name = data['repository']['name']
+                    repository_url = data['repository']['clone_url']
+                    subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
+                    return jsonify({'msg': 'ok'})
+
+                else:
+                    # TODO: Inform user somehow ... mail?
+                    return jsonify({'msg': 'access not granted'}), 401
         else:
             return jsonify({'msg': 'event not supported'}), 404
     else:
