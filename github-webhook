@@ -63,7 +63,7 @@ def webhook():
                 tag_name = data['release']['tag_name']
 
                 if(getUserType(user) == "admin"):
-                    log.info("Admin user " + user + " made a release for technology " + branch_name + "(" + tag_name + ")")
+                    log.info("Admin confirmed!")
                     granted_access = True
                 else:
                     granted_access = checkReservedResources(user, branch_name)
@@ -84,5 +84,7 @@ def webhook():
     else:
         return jsonify({'msg': 'invalid hash'}), 401
 
+    return jsonify({'msg': 'denied'}), 404
+
 if __name__ == '__main__':
-    app.run(host="localhost", port=8000)
+    app.run(host="localhost", port=8000, debug=True)
