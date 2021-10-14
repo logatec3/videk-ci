@@ -34,7 +34,7 @@ def checkReservedResources(username, technology):
         log.debug(r)
         if ( (r["event"]["start"] < now) and (r["event"]["end"] > now) ):
             return True
-    log.warning("User " + username + " has not made a reservation for technology " + technology)
+    log.warning("No " + technology + " reservations found for user " + username)
     return False
 
 def verify_hmac_hash(data, signature):
@@ -58,7 +58,7 @@ def webhook():
             return jsonify({'msg': 'ok'})
         elif event == 'release':
             if data['action'] == "published":
-                user = data['author']['login']
+                user = data['sender']['login']
                 branch_name = data['target_commitish']
                 tag_name = data['release']['tag_name']
 
