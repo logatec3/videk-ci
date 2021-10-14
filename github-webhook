@@ -80,13 +80,11 @@ def webhook():
                     # TODO: Inform user somehow ... mail?
                     return jsonify({'msg': 'access not granted'}), 401
             else:
-                return jsonify({"msg": "action not supported"}), 404
+                return jsonify({"msg": "ok"})
         else:
             return jsonify({'msg': 'event not supported'}), 404
     else:
         return jsonify({'msg': 'invalid hash'}), 401
 
-    return jsonify({'msg': 'denied'}), 404
-
 if __name__ == '__main__':
-    app.run(host="localhost", port=8000, debug=True)
+    app.run(host="localhost", port=8000)
