@@ -79,6 +79,8 @@ def webhook():
                 else:
                     # TODO: Inform user somehow ... mail?
                     return jsonify({'msg': 'access not granted'}), 401
+            else:
+                return jsonify({"msg": "action not supported"}), 404
         else:
             return jsonify({'msg': 'event not supported'}), 404
     else:
