@@ -59,7 +59,7 @@ def webhook():
         elif event == 'release':
             if data['action'] == "published":
                 user = data['sender']['login']
-                branch_name = data['target_commitish']
+                branch_name = data['release']['target_commitish']
                 tag_name = data['release']['tag_name']
 
                 if(getUserType(user) == "admin"):
