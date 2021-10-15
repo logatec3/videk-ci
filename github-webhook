@@ -74,7 +74,8 @@ def webhook():
                     return jsonify({'msg': 'ok'})
                 
                 log.info("User " + user + " successfully made a release for technology " + branch_name + "(" + tag_name + ")") 
-                subprocess.Popen(["./releasebuilder", "granted", tag_name, upload_url, repository_name, repository_url, github_token, "granted"])
+                out = subprocess.Popen(["./releasebuilder", "granted", tag_name, upload_url, repository_name, repository_url, github_token, "granted"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                log.info(out)
 
             return jsonify({"msg": "ok"})
         else:
