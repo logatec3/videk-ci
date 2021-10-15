@@ -10,9 +10,11 @@ upload_url = sys.argv[2]
 repository_name = sys.argv[3]
 repository_url = sys.argv[4]
 github_token = sys.argv[5]
+access = sys.argv[6]
 
 header = "Content-Type:application/zip"
 header_auth = "Authorization: token {}".format(github_token)
+repository_url_token = repository_url.replace('github', github_token+"@"+"github", 1)
 
 def logging(log):
     try:
@@ -28,22 +30,29 @@ if not os.path.isdir(tag_name+"/out"):
 else:
     sys.exit()
 
-repository_url_token = repository_url.replace('github', github_token+"@"+"github", 1)
+if access == "denied":
+    
+    message = """Testbed access denied.
+    Please make a reservation on the https://videk.ijs.si or contact the testbed administrators!
+    Cheers!"""
+    logging(message)
 
-logging("build pending ...")
 
-try:
-    out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
-    logging(out_clone)
-except:
-    logging(traceback.format_exc())
-    pass
+elif access == "granted":
 
-cmd = "cd " + tag_name+"/"+repository_name + "; make cd"
-out_build = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-output, errors = out_build.communicate()
-logging(output)
-logging(errors)
+    logging("build pending ...")
+    try:
+        out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
+        logging(out_clone)
+    except:
+        logging(traceback.format_exc())
+        pass
+
+    cmd = "cd " + tag_name+"/"+repository_name + "; make cd"
+    out_build = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    output, errors = out_build.communicate()
+    logging(output)
+    logging(errors)
 
 try:
     out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name, stderr=subprocess.STDOUT)

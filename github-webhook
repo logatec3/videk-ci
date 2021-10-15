@@ -18,14 +18,14 @@ secret = os.environ['SECRET_TOKEN']
 
 db = MongoClient("mongodb://localhost:27017/sms")["sms"]
 
-def getUserType(username):
+def get_user_type(username):
     user = db["users"].find_one({"username":username})
     if(user):
         return user["type"]
     else:
         return "unknown"
 
-def checkReservedResources(username, technology):
+def check_reserved_resources(username, technology):
     now = datetime.now().isoformat()
     reservations = db["reserved_resources"].find({
         "$and" :[{"username":username},{"event.tags.radio_type":technology},{"event.tags.status":"confirmed"}]
@@ -56,31 +56,27 @@ def webhook():
         event = request.headers.get('X-GitHub-Event')
         if event == 'ping':
             return jsonify({'msg': 'ok'})
+
         elif event == 'release':
             if data['action'] == "published":
                 user = data['sender']['login']
                 branch_name = data['release']['target_commitish']
                 tag_name = data['release']['tag_name']
+                upload_url = data['release']['upload_url'].replace("{?name,label}", "")
+                repository_name = data['repository']['name']
+                repository_url = data['repository']['clone_url']
 
-                if(getUserType(user) == "admin"):
-                    log.info("Admin confirmed!")
-                    granted_access = True
-                else:
-                    granted_access = checkReservedResources(user, branch_name)
-
-                if granted_access:
-                    log.info("User " + user + " successfully made a release for technology " + branch_name + "(" + tag_name + ")")
-                    upload_url = data['release']['upload_url'].replace("{?name,label}", "")
-                    repository_name = data['repository']['name']
-                    repository_url = data['repository']['clone_url']
-                    subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
+                if (get_user_type(user) == "admin"):
+                    pass
+                elif(not check_reserved_resources(user, branch_name)):
+                    log.info("Usage of " + branch_name + "(" + tag_name + ") denied for user " + user) 
+                    subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, "denied"])
                     return jsonify({'msg': 'ok'})
+                
+                log.info("User " + user + " successfully made a release for technology " + branch_name + "(" + tag_name + ")") 
+                subprocess.Popen(["./releasebuilder", "granted", tag_name, upload_url, repository_name, repository_url, github_token, "granted"])
 
-                else:
-                    # TODO: Inform user somehow ... mail?
-                    return jsonify({'msg': 'access not granted'}), 401
-            else:
-                return jsonify({"msg": "ok"})
+            return jsonify({"msg": "ok"})
         else:
             return jsonify({'msg': 'event not supported'}), 404
     else:
