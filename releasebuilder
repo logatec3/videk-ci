@@ -47,8 +47,9 @@ if access == "granted":
     logging(errors)
 
 else:
-    message = """Testbed access denied.
-    Please make a reservation on the https://videk.ijs.si or contact the testbed administrators!
+    message = """ Hi!
+    Your testbed access was denied.
+    Please make a reservation on the https://videk.ijs.si or contact the testbed administrators.
     Cheers!"""
     logging(message)
 
