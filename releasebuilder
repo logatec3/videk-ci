@@ -30,13 +30,8 @@ if not os.path.isdir(tag_name+"/out"):
 else:
     sys.exit()
 
-if not access:
-    message = """Testbed access denied.
-    Please make a reservation on the https://videk.ijs.si or contact the testbed administrators!
-    Cheers!"""
-    logging(message)
+if access == "granted":
 
-else:
     logging("build pending ...")
     try:
         out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
@@ -50,6 +45,12 @@ else:
     output, errors = out_build.communicate()
     logging(output)
     logging(errors)
+
+else:
+    message = """Testbed access denied.
+    Please make a reservation on the https://videk.ijs.si or contact the testbed administrators!
+    Cheers!"""
+    logging(message)
 
 try:
     out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name, stderr=subprocess.STDOUT)
