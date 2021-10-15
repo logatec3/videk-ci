@@ -70,14 +70,11 @@ def webhook():
                     pass
                 elif(not check_reserved_resources(user, branch_name)):
                     log.info("Usage of " + branch_name + "(" + tag_name + ") denied for user " + user) 
-                    subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, "denied"])
+                    subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, False])
                     return jsonify({'msg': 'ok'})
                 
                 log.info("User " + user + " successfully made a release for technology " + branch_name + "(" + tag_name + ")") 
-                out = subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, "granted"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-                ss, err = out.communicate()
-                log.info(ss)
-                log.info(err)
+                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, True])
 
             return jsonify({"msg": "ok"})
         else:
