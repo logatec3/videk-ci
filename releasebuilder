@@ -30,6 +30,8 @@ if not os.path.isdir(tag_name+"/out"):
 else:
     sys.exit()
 
+print(access)
+
 if access == "denied":
     print("Access denied")
 
@@ -38,8 +40,7 @@ if access == "denied":
     Cheers!"""
     logging(message)
 
-
-elif access == "granted":
+else:
 
     print("Access granted")
     logging("build pending ...")
