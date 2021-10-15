@@ -31,7 +31,8 @@ else:
     sys.exit()
 
 if access == "denied":
-    
+    print("Access denied")
+
     message = """Testbed access denied.
     Please make a reservation on the https://videk.ijs.si or contact the testbed administrators!
     Cheers!"""
@@ -40,21 +41,26 @@ if access == "denied":
 
 elif access == "granted":
 
+    print("Access granted")
     logging("build pending ...")
     try:
         out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
         logging(out_clone)
+        print("Cloned")
     except:
         logging(traceback.format_exc())
         pass
 
+    print("CD")
     cmd = "cd " + tag_name+"/"+repository_name + "; make cd"
     out_build = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     output, errors = out_build.communicate()
     logging(output)
     logging(errors)
+    print("end")
 
 try:
+    print("zip")
     out_zip = subprocess.check_output(["zip", "-r", "build-results.zip", "out"], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_zip)
 except:
@@ -62,6 +68,7 @@ except:
     pass
 
 try:
+    print("post")
     out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "-H", header_auth, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_upload)
 except:
