@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from datetime import datetime
 import logging
 
-logging.basicConfig(format="%(asctime)s [%(levelname)7s] - %(message)s", level=logging.DEBUG, filename="/root/videk-ci/webhook.log")
+logging.basicConfig(format="%(asctime)s [%(levelname)7s] - %(message)s", level=logging.DEBUG, filename="webhook.log")
 log = logging.getLogger("Webhook")
 
 github_token = sys.argv[1]
@@ -66,15 +66,15 @@ def webhook():
                 repository_name = data['repository']['name']
                 repository_url = data['repository']['clone_url']
 
+                access = "granted"
                 if (get_user_type(user) == "admin"):
                     pass
                 elif(not check_reserved_resources(user, branch_name)):
-                    log.info("Usage of " + branch_name + "(" + tag_name + ") denied for user " + user) 
-                    subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, "denied"])
-                    return jsonify({'msg': 'ok'})
+                    access = "denied"
                 
-                log.info("User " + user + " successfully made a release for technology " + branch_name + "(" + tag_name + ")") 
-                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, "granted"])
+                log.info("Usage of " + branch_name + "(" + tag_name + ") " + access + " for user " + user) 
+                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, access])
+                return jsonify({'msg': 'ok'})
 
             return jsonify({"msg": "ok"})
         else:
