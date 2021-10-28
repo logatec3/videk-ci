@@ -6,9 +6,36 @@ import hmac
 import hashlib
 import subprocess
 from flask import Flask, request, jsonify
+from pymongo import MongoClient
+from datetime import datetime
+import logging
+
+logging.basicConfig(format="%(asctime)s [%(levelname)7s] - %(message)s", level=logging.DEBUG, filename="webhook.log")
+log = logging.getLogger("Webhook")
 
 github_token = sys.argv[1]
 secret = os.environ['SECRET_TOKEN']
+
+db = MongoClient("mongodb://localhost:27017/sms")["sms"]
+
+def get_user_type(username):
+    user = db["users"].find_one({"username":username})
+    if(user):
+        return user["type"]
+    else:
+        return "unknown"
+
+def check_reserved_resources(username, technology):
+    now = datetime.now().isoformat()
+    reservations = db["reserved_resources"].find({
+        "$and" :[{"username":username},{"event.tags.radio_type":technology},{"event.tags.status":"confirmed"}]
+    })
+    for r in reservations:
+        log.debug(r)
+        if ( (r["event"]["start"] < now) and (r["event"]["end"] > now) ):
+            return True
+    log.warning("No " + technology + " reservations found for user " + username)
+    return False
 
 def verify_hmac_hash(data, signature):
     github_secret = bytes(secret, 'UTF-8')
@@ -29,14 +56,27 @@ def webhook():
         event = request.headers.get('X-GitHub-Event')
         if event == 'ping':
             return jsonify({'msg': 'ok'})
+
         elif event == 'release':
             if data['action'] == "published":
+                user = data['sender']['login']
+                branch_name = data['release']['target_commitish']
                 tag_name = data['release']['tag_name']
                 upload_url = data['release']['upload_url'].replace("{?name,label}", "")
                 repository_name = data['repository']['name']
                 repository_url = data['repository']['clone_url']
-                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token])
-            return jsonify({'msg': 'ok'})
+
+                access = "granted"
+                if (get_user_type(user) == "admin"):
+                    pass
+                elif(not check_reserved_resources(user, branch_name)):
+                    access = "denied"
+                
+                log.info("Usage of " + branch_name + "(" + tag_name + ") " + access + " for user " + user) 
+                subprocess.Popen(["./releasebuilder", tag_name, upload_url, repository_name, repository_url, github_token, access])
+                return jsonify({'msg': 'ok'})
+
+            return jsonify({"msg": "ok"})
         else:
             return jsonify({'msg': 'event not supported'}), 404
     else:
