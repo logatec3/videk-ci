@@ -32,14 +32,25 @@ else:
 
 if access == "granted":
 
-    logging("build pending ...")
     try:
+        logging("Cloning repo ...")
         out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
         logging(out_clone)
     except:
         logging(traceback.format_exc())
         pass
 
+    try:
+        submodfile = tag_name + "/" + repository_name + "/.gitmodules"
+        if(os.path.isfile(submodfile)):
+            logging("Updating submodules ... ")
+            subprocess.call(["sed", "-i", "s/git@github.com:/https:\/\/x-access-token:"+github_token+"@github.com\//g", submodfile])
+            subprocess.call(["git", "submodule", "update", "--init"])
+    except:
+        logging(traceback.format_exc())
+        pass
+    
+    logging("Deploying ...")
     cmd = "cd " + tag_name+"/"+repository_name + "; make cd"
     out_build = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     output, errors = out_build.communicate()
