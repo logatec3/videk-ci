@@ -45,7 +45,7 @@ if access == "granted":
         if(os.path.isfile(submodfile)):
             logging("Updating submodules ... ")
             subprocess.call(["sed", "-i", "s/git@github.com:/https:\/\/x-access-token:"+github_token+"@github.com\//g", submodfile])
-            subprocess.call(["git", "submodule", "update", "--init"])
+            subprocess.call(["cd "+ tag_name+"/"+repository_name, " && git submodule update --init"], shell=True)
     except:
         logging(traceback.format_exc())
         pass
