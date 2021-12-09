@@ -72,7 +72,7 @@ except:
     pass
 
 try:
-    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "-H", header_auth, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)    
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "-H", header_auth, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
     logging(out_upload)
 except:
     logging(traceback.format_exc())
