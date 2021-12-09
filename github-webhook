@@ -14,7 +14,7 @@ logging.basicConfig(format="%(asctime)s [%(levelname)7s] - %(message)s", level=l
 log = logging.getLogger("Webhook")
 
 github_token = sys.argv[1]
-secret = os.environ['SECRET_TOKEN']
+admin_secret = os.environ['SECRET_TOKEN']
 
 db = MongoClient("mongodb://localhost:27017/sms")["sms"]
 
@@ -37,10 +37,29 @@ def check_reserved_resources(username, technology):
     log.warning("No " + technology + " reservations found for user " + username)
     return False
 
-def verify_hmac_hash(data, signature):
-    github_secret = bytes(secret, 'UTF-8')
-    mac = hmac.new(github_secret, msg=data, digestmod=hashlib.sha1)
-    return hmac.compare_digest('sha1=' + mac.hexdigest(), signature)
+def get_active_tokens():
+    tokens = []
+    for user in db["users"].find({"status":"active"}):
+        tokens.append(user.get("token", {}))
+    return tokens
+
+def verify_hmac_hash(data, sign):
+    sha_name, signature = sign.split("=")
+    #if sha_name != "sha1":
+    #    return False
+    admin_token = bytes(admin_secret, 'UTF-8')
+    admin_mac = hmac.new(admin_token, msg=data, digestmod=hashlib.sha1)
+    if(hmac.compare_digest(admin_mac.hexdigest(), signature)):
+        return True
+
+    for user_secrets in get_active_tokens():
+        token = bytes(user_secrets, "UTF-8")
+        mac = hmac.new(token, msg=data, digestmod=hashlib.sha1)
+        if(hmac.compare_digest(mac.hexdigest(), signature)):
+            return True
+
+    log.warning("No active tokens found for request " + signature)        
+    return False
 
 app = Flask(__name__)
 
