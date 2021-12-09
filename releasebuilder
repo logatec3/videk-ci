@@ -34,8 +34,7 @@ if access == "granted":
 
     try:
         logging("Cloning repo ...")
-        #out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
-        out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url], cwd=tag_name, stderr=subprocess.STDOUT)
+        out_clone = subprocess.check_output(["git", "clone", "-b", tag_name, "--depth", "1", repository_url_token], cwd=tag_name, stderr=subprocess.STDOUT)
         logging(out_clone)
     except:
         logging(traceback.format_exc())
@@ -73,9 +72,7 @@ except:
     pass
 
 try:
-    #out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "-H", header_auth, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
-    # heh
-    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)
+    out_upload = subprocess.check_output(["curl", "-XPOST", "-H", header, "-H", header_auth, "--data-binary", "@build-results.zip", upload_url+"?name=build-results.zip"], cwd=tag_name, stderr=subprocess.STDOUT)    
     logging(out_upload)
 except:
     logging(traceback.format_exc())
